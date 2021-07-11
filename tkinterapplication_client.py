@@ -1,6 +1,13 @@
 # imports the tkinter module for the graphical user interface
 import tkinter
 from PIL import ImageTk,Image
+import tkcap
+
+def captureImage():
+    cap = tkcap.CAP(root)
+    cap.capture('joe.png')
+
+    
 
 # To center the window
 def center(win):
@@ -18,6 +25,8 @@ def center(win):
 
 # removes the main window when called
 def change_window():
+
+    
     window.destroy()
 
     root.iconify()
@@ -36,9 +45,10 @@ def change_window():
     # Position image
     label1.place(x=150, y=150)
 
-    getImage = tkinter.Button(root, text="Save Image",padx=20,pady=20)
-    getImage.place(x=200, y=150)
+    getImage = tkinter.Button(root, text="Save Image",padx=20,pady=20, command=captureImage)
     getImage.pack()
+    getImage.place(x=200, y=50)
+    
 
     root.resizable(width=0,height=0)
 
@@ -61,6 +71,7 @@ window = tkinter.Toplevel(root)
 # a button that will run the getQuote function
 getQuote = tkinter.Button(window, text="Generate Random Quote",padx=20,pady=20, command=change_window)
 getQuote.pack()
+getQuote.place(x=150, y=350)
 
 
 # Sets title, window size and alignment
