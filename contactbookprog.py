@@ -6,6 +6,8 @@ import sqlite3
 
 window = Tk()
 
+
+# Sets up the database
 connection = sqlite3.connect('test.db')
 cursor = connection.cursor()
 cursor.execute("CREATE TABLE IF NOT EXISTS `contacts` (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, name TEXT, address TEXT, contactNum TEXT)")
@@ -27,9 +29,6 @@ def center(win):
     win.deiconify()
 
 # Show Contacts
-
-
-
 def showContacts():
     newWindow = Toplevel(window)
     newWindow.title("Contact Book")
@@ -37,7 +36,7 @@ def showContacts():
     newWindow.resizable(width=0,height=0)
     center(newWindow)
     rows = cursor.execute("""
-        SELECT name,address,contactNum FROM contacts;
+        SELECT id,name,address,contactNum FROM contacts;
     """).fetchall
 
     Top = Frame(newWindow, width=700, height=60, bd=12, relief="raise")
@@ -57,11 +56,12 @@ def showContacts():
 
     scrollbary = Scrollbar(Body, orient=VERTICAL)
     scrollbarx = Scrollbar(Body, orient=HORIZONTAL)
-    tree = ttk.Treeview(Body, columns=("Fullname", "Address", "ContactNum"), selectmode="extended", height=300, yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
+    tree = ttk.Treeview(Body, columns=("Id", "Fullname", "Address", "ContactNum"), selectmode="extended", height=300, yscrollcommand=scrollbary.set, xscrollcommand=scrollbarx.set)
     scrollbary.config(command=tree.yview)
     scrollbary.pack(side=RIGHT, fill=Y)
     scrollbarx.config(command=tree.xview)
     scrollbarx.pack(side=BOTTOM, fill=X)
+    tree.heading('Id', text="Id", anchor=W)
     tree.heading('Fullname', text="Fullname", anchor=W)
     tree.heading('Address', text="Address", anchor=W)
     tree.heading('ContactNum', text="ContactNum", anchor=W)
@@ -69,6 +69,7 @@ def showContacts():
     tree.column('#1', stretch=NO, minwidth=0, width=200)
     tree.column('#2', stretch=NO, minwidth=0, width=200)
     tree.column('#3', stretch=NO, minwidth=0, width=200)
+    tree.column('#4', stretch=NO, minwidth=0, width=200)
     tree.pack()
 
     tree.delete(*tree.get_children())
@@ -76,10 +77,10 @@ def showContacts():
     fetch = cursor.fetchall()
 
     for data in fetch:
-        tree.insert('', 'end', values=(data[0], data[1], data[2]))
+        tree.insert('', 'end', values=(data[0], data[1], data[2], data[3]))
     
 
-    
+# Reveals the add contacts form    
 def addContacts():
     newWindow = Toplevel(window)
     newWindow.title("Contact Book")
@@ -112,13 +113,105 @@ def addContacts():
         print(contact)
 
         cursor.execute(f"INSERT INTO contacts(name,address,contactNum) VALUES ('{name}','{address}','{contact}')")
+        connection.commit()
         newWindow.destroy()
 
     button = Button(newWindow,command=insertData, text="Insert Data").place( x = 300, y = 130)
 
 
 
+# Reveals the modify contacts form
+def modifyContacts():
+    newWindow = Toplevel(window)
+    newWindow.title("Contact Book")
+    newWindow.geometry("500x300")
+    newWindow.resizable(width=0,height=0)
+    center(newWindow)
 
+    id_var = StringVar()
+
+    l1 = Label(newWindow, text="Id of item to modify").place(x = 100, y = 100 )
+    e1 = Entry(newWindow, textvariable=id_var, bd = 5 ).place(x = 100, y = 130)
+
+
+    def modifyData():
+        newWindow = Toplevel(window)
+        newWindow.title("Contact Book")
+        newWindow.geometry("500x300")
+        newWindow.resizable(width=0,height=0)
+        center(newWindow)
+
+        name_var = StringVar()
+        address_var = StringVar()
+        contact_var = StringVar()
+
+        l1 = Label(newWindow, text="Full Name").place(x = 100, y = 20 )
+        e1 = Entry(newWindow, textvariable=name_var, bd = 5 ).place(x = 100, y = 50)
+
+        l2 = Label(newWindow, text="Address Name").place(x = 100, y = 100 )
+        e2 = Entry(newWindow, textvariable=address_var, bd = 5 ).place(x = 100, y = 130)
+
+        l3 = Label(newWindow, text="Contact Number").place(x = 100, y = 180 )
+        e3 = Entry(newWindow, textvariable=contact_var, bd = 5 ).place(x = 100, y = 210)
+
+        def insertData():        
+            name = name_var.get()
+            address = address_var.get()
+            contact = contact_var.get()
+            id = id_var.get()
+
+            cursor.execute(f"UPDATE contacts SET name = '{name}', address = '{address}', contactNum = '{contact}' WHERE id = '{id}'")
+            connection.commit()
+            newWindow.destroy()
+
+        button = Button(newWindow,command=insertData, text="Insert Data").place( x = 300, y = 130)
+
+    button = Button(newWindow,command=modifyData, text="Edit Data").place( x = 300, y = 130)
+    
+# Reveals the delete contacts form
+def deleteContacts():
+    newWindow = Toplevel(window)
+    newWindow.title("Contact Book")
+    newWindow.geometry("500x300")
+    newWindow.resizable(width=0,height=0)
+    center(newWindow)
+
+    id_var = StringVar()
+
+    l1 = Label(newWindow, text="Id of item to delete").place(x = 100, y = 100 )
+    e1 = Entry(newWindow, textvariable=id_var, bd = 5 ).place(x = 100, y = 130)
+
+
+
+
+    def deleteData():        
+        id = id_var.get()
+
+        cursor.execute(f"DELETE FROM contacts WHERE id = {id} ")
+        connection.commit()
+        newWindow.destroy()
+
+    button = Button(newWindow,command=deleteData, text="Delete Data").place( x = 300, y = 130)
+
+
+def clearContacts():
+    newWindow = Toplevel(window)
+    newWindow.title("Contact Book")
+    newWindow.geometry("600x300")
+    newWindow.resizable(width=0,height=0)
+    center(newWindow)
+
+    def Clear():
+        cursor.execute(f"DELETE FROM contacts")
+        connection.commit()
+        newWindow.destroy()
+
+    def Close():
+        newWindow.destroy()
+
+    warning = Label(newWindow, text="THIS PROCESS WILL REMOVE ALL DATA FROM THE CONTACT LIST. WILL YOU STILL CONTINUE?", fg="red").place(x=50,y=100)
+    yes = Button(newWindow,padx=50, command=Clear, fg="red", text="Yes").place(x=150, y=200)
+    no = Button(newWindow,padx=50, command=Close, text="No").place(x=325, y=200)
 
 
 
@@ -128,17 +221,18 @@ def addContacts():
 
 
 
-# View
+#View
 def view():
-    label1 = Label(window, font=("Arial", 25), text="Contact Book").place( x=150, y = 60)
+    label1 = Label(window, font=("Arial", 25), background="yellow", text="Contact Book").place( x=150, y = 60)
     showBtn = Button(window, command=showContacts ,text="Show all contacts").place(x = 195, y = 200)
     addBtn = Button(window, command=addContacts , text="Add New Contact" ).place(x = 195, y = 250)
-    modifyBtn = Button(window, text="Modify Existing Contact").place( x = 180,y = 300)
-    deleteBtn = Button(window, text="Delete  Existing Contact").place(x = 180, y = 350)
+    modifyBtn = Button(window, command=modifyContacts, text="Modify Existing Contact").place( x = 180,y = 300)
+    deleteBtn = Button(window, command=deleteContacts, text="Delete Existing Contact").place(x = 180, y = 350)
+    clearBtn = Button(window, command=clearContacts ,text="Clear All Contacts").place(x = 195, y = 400)
 
 
 
-#set window size
+#Set window size
 window.title("Contact Book")
 window.geometry("500x500")
 window.resizable(width=0,height=0)
@@ -149,4 +243,3 @@ view()
 
 
 window.mainloop()
-
